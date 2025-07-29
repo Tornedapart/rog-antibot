@@ -1,0 +1,7 @@
+{
+  "allowCountries": "US",
+  "bridgeDomain": "http://localhost",
+  "shortlinkPath": "awesa",
+  "mainSite": "https://youtube.com",
+  "blockIps": ""
+}

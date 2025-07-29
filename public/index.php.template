@@ -1,0 +1,44 @@
+<?php
+$apiKey = 'PASTEAPIKEYDISINI';
+$antibotApi = 'http://localhost:3000/api/check';
+
+if (
+    $_SERVER['REQUEST_URI'] === '/favicon.ico' ||
+    !isset($_GET['rog']) || empty($_GET['rog'])
+) {
+    http_response_code(404);
+    include '404.html';
+    exit;
+}
+
+$rog = $_GET['rog'];
+
+$ch = curl_init($antibotApi);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json'
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'apiKey' => $apiKey,
+    'shortlink' => $rog,
+    'ip' => $_SERVER['REMOTE_ADDR'],
+    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+]));
+
+$response = curl_exec($ch);
+$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpcode === 200 && $response) {
+    $data = json_decode($response, true);
+    if (!empty($data['allow']) && !empty($data['redirect'])) {
+        header('Location: ' . $data['redirect']);
+        exit;
+    }
+}
+
+// All other cases
+http_response_code(404);
+include '404.html';
+exit;

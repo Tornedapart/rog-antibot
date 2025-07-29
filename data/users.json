@@ -1,0 +1,16 @@
+[
+  {
+    "user": "demo",
+    "passwordHash": "$2b$10$Rn/x2mVoBkfmeIee7sB0XesCNNVB9o84XyZ993V8Zh56aoZ.U.N66",
+    "apiKey": "10139810325-ROG-X",
+    "subscription": "free",
+    "createdAt": "2025-07-28T19:28:18.540Z"
+  },
+  {
+    "user": "rog",
+    "passwordHash": "$2b$10$mAGkCsV0ohkX/kZjtlTQvepLoHTsiI5KEYL5qiKLdUxBFHvcZF6Yu",
+    "apiKey": "81923709123-ROG-X",
+    "subscription": "30day",
+    "createdAt": "2025-07-28T13:10:54.956Z"
+  }
+]
