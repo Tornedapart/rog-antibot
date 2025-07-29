@@ -4,16 +4,16 @@ import "./globals.css";
 const assistant = Assistant({
     variable: "--font-assistant",
     subsets: ["latin"],
-    display: "swap", // optional: improves rendering behavior
+    display: "swap",
 });
 
 export const metadata = {
     title: `ROG Antibot #Home`,
     description: `ROG Antibot is a powerful, developer-friendly antibot security platform designed to detect, block, and filter malicious traffic including bots, proxies, VPNs, and suspicious IPs.`,
-    keywords: ['antibot', 'security', 'ip filtering', 'bot protection', 'proxy detection', 'vpn detection', 'web security', 'ROG Antibot', 'traffic filtering', 'threat mitigation'],
-    icons: {
-        icon: '/favicon.svg',
-    },
+    keywords: [
+        'antibot', 'security', 'ip filtering', 'bot protection', 'proxy detection',
+        'vpn detection', 'web security', 'ROG Antibot', 'traffic filtering', 'threat mitigation'
+    ],
     openGraph: {
         siteName: 'ROG Antibot',
         title: `ROG Antibot | Advanced Web Security & Bot Protection`,
@@ -47,11 +47,7 @@ export const metadata = {
         description: `Fortify your website with ROG Antibot — the next-gen solution for detecting bots, filtering proxies/VPNs, and managing traffic security with precision.`,
         images: '/rog.svg',
     },
-    /*facebook: {
-        appId: 'your-facebook-app-id',
-    },*/
 };
-
 
 export default function RootLayout({ children }) {
     return (

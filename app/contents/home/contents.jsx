@@ -103,7 +103,13 @@ export default function RogHome() {
 							<span
 								className={`relative inline-block group cursor-pointer text-red-700`}
 							>
-								Get Access Now!
+								<Link
+									href="https://t.me/tornapartx"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									Get Access Now!
+								</Link>
 								<span className="absolute left-0 -bottom-0.5 w-0 h-[2px] bg-red-700 transition-all duration-300 group-hover:w-full"></span>
 							</span>
 						</button>
