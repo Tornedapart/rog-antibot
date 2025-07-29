@@ -11,6 +11,9 @@ export const metadata = {
     title: `ROG Antibot #Home`,
     description: `ROG Antibot is a powerful, developer-friendly antibot security platform designed to detect, block, and filter malicious traffic including bots, proxies, VPNs, and suspicious IPs.`,
     keywords: ['antibot', 'security', 'ip filtering', 'bot protection', 'proxy detection', 'vpn detection', 'web security', 'ROG Antibot', 'traffic filtering', 'threat mitigation'],
+    icons: {
+        icon: '/favicon.svg',
+    },
     openGraph: {
         siteName: 'ROG Antibot',
         title: `ROG Antibot | Advanced Web Security & Bot Protection`,
