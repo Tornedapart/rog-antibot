@@ -46,17 +46,46 @@ export default async function handler(req, res) {
         const blockIps = config.blockIps || "";
         const shortlinkPath = config.shortlinkPath || "";
         const enableLocalDetection = config.enableLocalDetection ?? true;
+        const bridgeDomain = config.bridgeDomain || "";
+
+        const referer = headers.referer || headers.origin || "";
+        const normalizedReferer = referer.replace("://[::1]", "://localhost").replace("://127.0.0.1", "://localhost");
+
+        let blocked = false;
+        let blockReason = "";
+        let isLocalBlock = false;
+
+        // 🔒 Enforce bridge domain check (non-terminating)
+
+        // Block if referer is still missing
+        if (!normalizedReferer) {
+            blocked = true;
+            blockReason = "Missing referer or origin";
+        }
+
+        // Bridge domain check
+        if (bridgeDomain && !blocked) {
+            const sanitizedBridge = bridgeDomain.replace(/\/$/, "").toLowerCase();
+            const sanitizedReferer = normalizedReferer.toLowerCase();
+
+            if (!sanitizedReferer.startsWith(sanitizedBridge)) {
+                blocked = true;
+                blockReason = `Unauthorized Access : ${sanitizedReferer}`;
+            }
+        }
 
         // 🧠 Local bot detection
-        const { blocked: localBlocked, reason: localReason } = enableLocalDetection
+        const localResult = enableLocalDetection
             ? rogAntibot({ ip, userAgent, headers })
             : { blocked: false, reason: "" };
 
-        let blocked = localBlocked;
-        let blockReason = localBlocked ? localReason || "Blocked locally" : "";
-        const isLocalBlock = localBlocked;
+        if (!blocked && localResult.blocked) {
+            blocked = true;
+            blockReason = localResult.reason || "Blocked locally";
+            isLocalBlock = true;
+        }
 
-        // 🧠 Shortlink logic
+        // 🔗 Shortlink logic
         const incomingShortlink = shortlink.trim().toLowerCase();
         const expectedShortlink = shortlinkPath.trim().toLowerCase();
         if (!blocked && incomingShortlink !== expectedShortlink) {
@@ -64,7 +93,7 @@ export default async function handler(req, res) {
             blockReason = "Invalid shortlink path";
         }
 
-        // 🧠 Honeypot
+        // 🕳️ Honeypot
         if (!blocked && honeypot.trim() !== '') {
             blocked = true;
             blockReason = "Honeypot triggered";
@@ -90,7 +119,7 @@ export default async function handler(req, res) {
             blockReason = "Bot detected";
         }
 
-        // 🌎 Country block
+        // 🌍 Country allowlist
         if (!blocked && allowCountries.trim() && ipDetective?.country_code) {
             const allowedArr = allowCountries.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
             if (!allowedArr.includes(ipDetective.country_code.toUpperCase())) {
@@ -99,7 +128,7 @@ export default async function handler(req, res) {
             }
         }
 
-        // ⛔ Blocked IP
+        // 🚫 IP block
         if (!blocked && blockIps.trim()) {
             const blockArr = blockIps.split(',').map(ip => ip.trim()).filter(Boolean);
             if (blockArr.includes(ip)) {
@@ -108,7 +137,7 @@ export default async function handler(req, res) {
             }
         }
 
-        // ⏰ Jakarta time
+        // 🕒 Jakarta time
         const now = new Date();
         const jakartaTime = now.toLocaleTimeString('en-US', {
             timeZone: 'Asia/Jakarta',
@@ -117,7 +146,7 @@ export default async function handler(req, res) {
             hour12: true
         });
 
-        // 📝 Prepare log
+        // 📝 Logging
         const result = blocked ? "Blocked" : "Allowed";
         const reason = blocked ? (blockReason || "Blocked by config") : "Passed antibot checks";
 
@@ -138,7 +167,7 @@ export default async function handler(req, res) {
             console.error("Failed to log visitor:", e);
         }
 
-        // 🚧 Final response
+        // ✅ Final response
         if (blocked) {
             return res.status(200).json({ allow: false, reason });
         }

@@ -1,5 +1,5 @@
 <?php
-$apiKey = 'PASTEAPIKEYDISINI';
+$apiKey = 'PASTE';
 $antibotApi = 'https://rog-antibot.vercel.app/api/check';
 
 if (
@@ -16,14 +16,19 @@ $rog = $_GET['rog'];
 $ch = curl_init($antibotApi);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
+$scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+$host = $_SERVER['HTTP_HOST'];
+$referer = $scheme . "://" . $host;
+
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json'
+    'Content-Type: application/json',
+    'Referer: ' . $referer
 ]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
     'apiKey' => $apiKey,
     'shortlink' => $rog,
     'ip' => $_SERVER['REMOTE_ADDR'],
-    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
     'honeypot' => ''
 ]));
 
@@ -39,7 +44,6 @@ if ($httpcode === 200 && $response) {
     }
 }
 
-// All other cases
 http_response_code(404);
 include '404.html';
 exit;
