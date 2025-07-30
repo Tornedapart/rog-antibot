@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import RogLoading from "./loading";
 
 export default function VisitorSummaryModal() {
 	const [open, setOpen] = useState(false);
@@ -58,7 +59,9 @@ export default function VisitorSummaryModal() {
 						</button>
 
 						<AnimatePresence>
-							<motion.div className="overflow-x-auto border w-full rounded-lg shadow-inner max-h-[600px] overflow-y-auto mt-10">
+							<motion.div
+								className={`overflow-x-auto w-full rounded-lg shadow-inner max-h-[600px] overflow-y-auto mt-10 ${visitors.length < 1 ? "" : "border"}`}
+							>
 								{visitors.length > 0 ? (
 									<table className="min-w-full text-xs cursor-default">
 										<thead className="sticky top-0">
@@ -165,10 +168,11 @@ export default function VisitorSummaryModal() {
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
 										exit={{ opacity: 0 }}
-										transition={{ duration: 0.4 }}
-										className="text-center text-sm text-gray-400 py-10 font-mono"
+										transition={{ duration: 0.5 }}
+										className="flex flex-col items-center justify-center h-[60vh] py-10 font-mono"
 									>
-										No visitor logs available.
+										<RogLoading className="w-52 h-52" />
+										<span>NO VISITORS YET</span>
 									</motion.div>
 								)}
 							</motion.div>
