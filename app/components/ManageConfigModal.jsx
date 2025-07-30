@@ -150,12 +150,12 @@ export default function ManageConfigModal({
 										exit={{ opacity: 0 }}
 										transition={{ duration: 0.5 }}
 										style={{
-											background: "rgba(0,0,0,0.6)",
+											background: "#0a0a0a",
 											backdropFilter: "blur(2px)",
 										}}
 									>
-										<span className="text-green-400 text-xs animate-fade-in text-center">
-											Shortlink Copied!
+										<span className="text-green-600 text-xs animate-fade-in text-center">
+											SHORTLINK COPIED
 										</span>
 									</motion.div>
 								</AnimatePresence>
