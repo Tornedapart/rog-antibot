@@ -1,40 +1,21 @@
-// pages/api/userinfo.js
-import fs from "fs";
-import path from "path";
 
-export default function handler(req, res) {
+import sanity from '../../lib/sanity';
+
+export default async function handler(req, res) {
     const { user } = req.query;
     if (!user) return res.status(400).json({ error: "Missing user" });
-    const usersPath = path.join(process.cwd(), "data", "users.json");
-    let users = [];
-    try {
-        users = JSON.parse(fs.readFileSync(usersPath, "utf8"));
-    } catch {
-        return res.status(500).json({ error: "Could not read users.json" });
-    }
-    const idx = users.findIndex(u => u.user === user);
-    if (idx === -1) return res.status(404).json({ error: "User not found" });
-    let found = users[idx];
+    // Fetch user from Sanity
+    let found = await sanity.fetch(`*[_type == "user" && user == $user][0]`, { user });
+    if (!found) return res.status(404).json({ error: "User not found" });
+    // If no createdAt, set it to Jakarta time now
     if (!found.createdAt) {
-        // Get Jakarta time as ISO string
         const now = new Date();
-        const jakartaOffset = 7 * 60; // UTC+7 in minutes
-        const localOffset = now.getTimezoneOffset();
-        const diff = jakartaOffset + localOffset;
-        const jakartaDate = new Date(now.getTime() + diff * 60 * 1000);
+        const jakartaDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
         found.createdAt = jakartaDate.toISOString();
-        users[idx] = found;
-        try {
-            fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
-        } catch { }
+        await sanity.patch(found._id).set({ createdAt: found.createdAt }).commit();
     }
-    // Parse subscription days from 'subscription' field (e.g., '7day', '30day'). If not a number, treat as unlimited/free.
-    let days = null;
-    if (found.subscription && /^(\d+)day$/.test(found.subscription)) {
-        days = parseInt(found.subscription.match(/^(\d+)day$/)[1], 10);
-    }
-    // Parse subscription days or minutes from 'subscription' field (e.g., '7day', '1minute').
-    let minutes = null;
+    // Parse subscription days/minutes
+    let days = null, minutes = null;
     if (found.subscription) {
         if (/^(\d+)day$/.test(found.subscription)) {
             days = parseInt(found.subscription.match(/^(\d+)day$/)[1], 10);
@@ -44,8 +25,18 @@ export default function handler(req, res) {
     }
     // Calculate expiry in Asia/Jakarta, 12-hour AM/PM
     let expiryJakarta = null;
+    let created = null;
     if (found.createdAt) {
-        const created = new Date(found.createdAt);
+        // Try to parse as ISO, fallback to 'YYYY-MM-DD HH:mm' format
+        if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(found.createdAt)) {
+            created = new Date(found.createdAt);
+        } else if (/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(found.createdAt)) {
+            // Convert 'YYYY-MM-DD HH:mm' to 'YYYY-MM-DDTHH:mm:00+07:00'
+            const iso = found.createdAt.replace(' ', 'T') + ':00+07:00';
+            created = new Date(iso);
+        } else {
+            created = new Date(found.createdAt);
+        }
         let expiry = null;
         if (minutes !== null) {
             expiry = new Date(created.getTime() + minutes * 60 * 1000);
@@ -61,5 +52,5 @@ export default function handler(req, res) {
             });
         }
     }
-    res.json({ createdAt: found.createdAt, days, minutes, expiryJakarta });
+    return res.status(200).json({ ...found, expiryJakarta, days, minutes });
 }

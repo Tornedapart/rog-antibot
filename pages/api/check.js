@@ -1,68 +1,53 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import sanity from '../../lib/sanity';
 import fetch from 'node-fetch';
 
-const dataPath = path.join(process.cwd(), 'data', 'users.json');
-const now = new Date();
 
-const jakartaTime = now.toLocaleTimeString('en-US', {
-    timeZone: 'Asia/Jakarta',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-});
+// Helper: get user by apiKey from Sanity
+async function getUserByApiKey(apiKey) {
+    return await sanity.fetch(`*[_type == "user" && apiKey == $apiKey][0]`, { apiKey });
+}
+
+// Helper: get config by apiKey from Sanity
+async function getConfigByApiKey(apiKey) {
+    return await sanity.fetch(`*[_type == "config" && apiKey == $apiKey][0]`, { apiKey }) || {};
+}
+
+// Helper: log visitor to Sanity
+async function logVisitor(user, log) {
+    await sanity.create({
+        _type: 'visitorLog',
+        user: { _type: 'reference', _ref: user._id },
+        ...log,
+        createdAt: new Date().toISOString(),
+    });
+}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
-
     try {
         const { apiKey, ip, userAgent, shortlink = '', ...visitorInfo } = req.body;
-
         if (!apiKey || !ip || !userAgent) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Load users
-        let users = [];
-        try {
-            const file = await fs.readFile(dataPath, 'utf-8');
-            users = JSON.parse(file);
-        } catch (e) {
-            users = [];
-        }
-
-        const user = users.find(u => u.apiKey === apiKey);
+        // Get user and config from Sanity
+        const user = await getUserByApiKey(apiKey);
         if (!user) {
             return res.status(401).json({ error: 'Invalid API key' });
         }
-
-        // Load user config
-        let allowCountries = "";
-        let mainSite = "";
-        let blockIps = "";
-        let shortlinkPath = "";
-
-        try {
-            const configPath = path.join(process.cwd(), 'data', `config_${apiKey}.json`);
-            const configFile = await fs.readFile(configPath, 'utf-8');
-            const config = JSON.parse(configFile);
-            allowCountries = config.allowCountries || "";
-            mainSite = config.mainSite || "";
-            blockIps = config.blockIps || "";
-            shortlinkPath = config.shortlinkPath || "";
-        } catch (e) {
-            // no config file, fallback to empty/defaults
-        }
+        const config = await getConfigByApiKey(apiKey);
+        const allowCountries = config.allowCountries || "";
+        const mainSite = config.mainSite || "";
+        const blockIps = config.blockIps || "";
+        const shortlinkPath = config.shortlinkPath || "";
 
         // Check shortlink
         const incomingShortlink = shortlink.trim().toLowerCase();
         const expectedShortlink = shortlinkPath.trim().toLowerCase();
-
         let blocked = false;
         let blockReason = "";
-
         if (incomingShortlink !== expectedShortlink) {
             blocked = true;
             blockReason = "Invalid shortlink path";
@@ -77,24 +62,21 @@ export default async function handler(req, res) {
             if (resp.ok) {
                 ipDetective = await resp.json();
             }
-        } catch (e) {
-            // fallback to userAgent
-        }
+        } catch (e) { }
 
+        // Bot detection
         const isBot = ipDetective?.bot || /bot|crawl|spider|curl|wget/i.test(userAgent);
 
-        // Country check
-        let countryAllowed = true;
+        // Country allow/block
         if (!blocked && allowCountries.trim() && ipDetective?.country_code) {
             const allowedArr = allowCountries.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
-            countryAllowed = allowedArr.includes(ipDetective.country_code.toUpperCase());
-            if (!countryAllowed) {
+            if (!allowedArr.includes(ipDetective.country_code.toUpperCase())) {
                 blocked = true;
                 blockReason = `Country not allowed (${ipDetective.country_code})`;
             }
         }
 
-        // IP block check
+        // IP block
         if (!blocked && blockIps.trim()) {
             const blockArr = blockIps.split(',').map(ip => ip.trim()).filter(Boolean);
             if (blockArr.includes(ip)) {
@@ -103,15 +85,24 @@ export default async function handler(req, res) {
             }
         }
 
+        // Bot block
         if (!blocked && isBot) {
             blocked = true;
             blockReason = "Bot detected";
         }
 
-        const logPath = path.join(process.cwd(), 'data', `logs_${user.user}.json`);
+        // Jakarta time for log
+        const now = new Date();
+        const jakartaTime = now.toLocaleTimeString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        // Log visitor to Sanity
         const result = blocked ? "Blocked" : "Allowed";
         const reason = blocked ? (blockReason || "Blocked by config") : "Passed antibot checks";
-
         const logEntry = {
             time: jakartaTime,
             ip,
@@ -122,24 +113,14 @@ export default async function handler(req, res) {
             reason,
             ...visitorInfo
         };
-
-        let logs = [];
         try {
-            const logFile = await fs.readFile(logPath, 'utf-8');
-            logs = JSON.parse(logFile);
-        } catch (e) {
-            logs = [];
-        }
-
-        logs.push(logEntry);
-        await fs.writeFile(logPath, JSON.stringify(logs, null, 2));
+            await logVisitor(user, logEntry);
+        } catch (e) { }
 
         if (blocked) {
             return res.status(200).json({ allow: false, reason });
         }
-
         return res.status(200).json({ allow: true, redirect: mainSite });
-
     } catch (err) {
         console.error('ANTIBOT CHECK ERROR:', err);
         return res.status(500).json({ error: 'Internal server error' });

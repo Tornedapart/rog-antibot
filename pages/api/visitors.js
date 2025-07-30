@@ -1,5 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+
+import sanity from '../../lib/sanity';
 
 const dataPath = path.join(process.cwd(), 'data', 'users.json');
 
@@ -11,24 +11,12 @@ export default async function handler(req, res) {
     if (!apiKey) {
         return res.status(400).json({ error: 'Missing apiKey' });
     }
-    let users = [];
-    try {
-        const file = await fs.readFile(dataPath, 'utf-8');
-        users = JSON.parse(file);
-    } catch (e) {
-        users = [];
-    }
-    const user = users.find(u => u.apiKey === apiKey);
+    // Fetch user from Sanity
+    const user = await sanity.fetch(`*[_type == "user" && apiKey == $apiKey][0]`, { apiKey });
     if (!user) {
         return res.status(401).json({ error: 'Invalid API key' });
     }
-    const logPath = path.join(process.cwd(), 'data', `logs_${user.user}.json`);
-    let logs = [];
-    try {
-        const logFile = await fs.readFile(logPath, 'utf-8');
-        logs = JSON.parse(logFile);
-    } catch (e) {
-        logs = [];
-    }
+    // Fetch visitor logs from Sanity
+    const logs = await sanity.fetch(`*[_type == "visitorLog" && user._ref == $userId] | order(createdAt desc)[0...1000]`, { userId: user._id });
     return res.status(200).json({ visitors: logs });
 }

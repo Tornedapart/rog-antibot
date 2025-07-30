@@ -1,10 +1,9 @@
 import { sessionOptions } from '../../lib/session';
 import { getIronSession } from 'iron-session';
-import { promises as fs } from 'fs';
-import path from 'path';
+import sanity from '../../lib/sanity';
 import bcrypt from 'bcryptjs';
 
-const dataPath = path.join(process.cwd(), 'data', 'users.json');
+
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -15,20 +14,21 @@ export default async function handler(req, res) {
         if (!user || !password) {
             return res.status(400).json({ error: 'Username and password required.' });
         }
-        let users = [];
-        try {
-            const file = await fs.readFile(dataPath, 'utf-8');
-            users = JSON.parse(file);
-        } catch (e) {
-            users = [];
-        }
-        const foundUser = users.find(u => u.user === user);
+        // Fetch user from Sanity
+        const foundUser = await sanity.fetch(`*[_type == "user" && user == $user][0]`, { user });
         if (!foundUser) {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
         const valid = await bcrypt.compare(password, foundUser.passwordHash);
         if (!valid) {
             return res.status(401).json({ error: 'Invalid credentials.' });
+        }
+        // Ensure createdAt is set if missing
+        if (!foundUser.createdAt) {
+            const now = new Date();
+            const jakartaDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+            foundUser.createdAt = jakartaDate.toISOString();
+            await sanity.patch(foundUser._id).set({ createdAt: foundUser.createdAt }).commit();
         }
         // Set session
         const session = await getIronSession(req, res, sessionOptions);
