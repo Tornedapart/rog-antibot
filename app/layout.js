@@ -22,22 +22,10 @@ export const metadata = {
         type: 'website',
         images: [
             {
-                url: '/rog.png',
+                url: 'https://rog-antibot.vercel.app/rog.png',
                 width: 1200,
                 height: 630,
                 alt: `ROG Antibot Featured Security System`,
-            },
-            {
-                url: '/rog.png',
-                width: 800,
-                height: 800,
-                alt: `ROG Antibot Shield Icon`,
-            },
-            {
-                url: '/rog.png',
-                width: 800,
-                height: 800,
-                alt: `ROG Antibot Logo`,
             },
         ],
     },
@@ -45,7 +33,7 @@ export const metadata = {
         card: 'summary_large_image',
         title: `ROG Antibot | Advanced Web Security & Bot Protection`,
         description: `Fortify your website with ROG Antibot — the next-gen solution for detecting bots, filtering proxies/VPNs, and managing traffic security with precision.`,
-        images: '/rog.png',
+        images: ['https://rog-antibot.vercel.app/rog.png'],
     },
 };
 
