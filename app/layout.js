@@ -23,9 +23,33 @@ export const metadata = {
         images: [
             {
                 url: 'https://rog-antibot.vercel.app/rog.png',
+                width: 320,
+                height: 180,
+                alt: 'ROG Antibot Security (XS)',
+            },
+            {
+                url: 'https://rog-antibot.vercel.app/rog.png',
+                width: 640,
+                height: 360,
+                alt: 'ROG Antibot Security (SM)',
+            },
+            {
+                url: 'https://rog-antibot.vercel.app/rog.png',
+                width: 800,
+                height: 418,
+                alt: 'ROG Antibot Security (MD)',
+            },
+            {
+                url: 'https://rog-antibot.vercel.app/rog.png',
                 width: 1200,
                 height: 630,
-                alt: `ROG Antibot Featured Security System`,
+                alt: 'ROG Antibot Security (LG)',
+            },
+            {
+                url: 'https://rog-antibot.vercel.app/rog.png',
+                width: 1600,
+                height: 840,
+                alt: 'ROG Antibot Security (XL)',
             },
         ],
     },

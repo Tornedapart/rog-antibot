@@ -70,7 +70,7 @@ export default function RogHome() {
 			</AnimatePresence>
 			{/* Header */}
 			<motion.header
-				className="sticky top-0 z-50 px-5 bg-[#0a0a0a] text-white"
+				className="sticky py-1 top-0 z-50 px-5 bg-[#0a0a0a] text-white"
 				initial="hidden"
 				whileInView="show"
 				viewport={{ once: false }}
@@ -92,7 +92,7 @@ export default function RogHome() {
 						}`}
 					></motion.div>
 
-					<motion.div layout className="flex gap-2 items-center">
+					<motion.div layout className="flex gap-0 md:gap-1 items-center">
 						<Link
 							href="/login"
 							className="hover:scale-110 transition-transform duration-300"
@@ -100,11 +100,11 @@ export default function RogHome() {
 							<RogLoading />
 						</Link>
 						<button className={`${hasScrolled ? "" : "hidden"}`}>
-							<span className="mr-5">
+							<span className="mr-0 md:mr-2 text-xs md:text-base">
 								We don’t block bots — we eliminate them.
 							</span>
 							<span
-								className={`relative inline-block group cursor-pointer text-red-700`}
+								className={`relative inline-block group cursor-pointer text-red-700 text-sm md:text-base`}
 							>
 								<Link
 									href="https://t.me/tornapartx"

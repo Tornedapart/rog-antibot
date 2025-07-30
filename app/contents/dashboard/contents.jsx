@@ -260,27 +260,6 @@ export default function DashboardPageContents() {
 										<span className="absolute left-0 -bottom-0.5 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
 									</span>
 								</button>
-								<button
-									className="text-left"
-									onClick={() => logout(router, setLogoutLoading)}
-									disabled={logoutLoading}
-								>
-									{logoutLoading && (
-										<div
-											className={`absolute left-10 top-10 inline-block group cursor-pointer mt-1`}
-										>
-											<RogLoading />
-										</div>
-									)}
-									<span
-										className={`absolute left-3 md:left-5 lg:left-5 xl:left-5 top-10 inline-block group cursor-pointer mt-1 text-xs xl:text-base ${
-											logoutLoading ? "opacity-0" : ""
-										}`}
-									>
-										LOGOUT
-										<span className="absolute left-0 -bottom-0.5 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
-									</span>
-								</button>
 							</div>
 							<div className="flex items-center justify-center mt-4">
 								<div className="absolute top-20 left-auto flex items-center justify-center">
@@ -290,9 +269,10 @@ export default function DashboardPageContents() {
 										animate={{ opacity: 1 }}
 										exit={{ opacity: 0 }}
 										transition={{ duration: 0.5 }}
+										className="flex flex-col items-center"
 									>
 										<span
-											className={`tracking-widest break-all rounded font-mono text-yellow-600 hover:text-sm xl:hover:text-2xl text-xs xl:text-xl transition-all duration-300 cursor-pointer ${
+											className={`tracking-widest break-all rounded font-bold font-mono text-yellow-600 hover:text-2xl text-base md:text-xl transition-all duration-300 cursor-pointer ${
 												copied ? "opacity-0" : ""
 											}`}
 											onClick={() => {
@@ -306,13 +286,35 @@ export default function DashboardPageContents() {
 										>
 											{user.user.toUpperCase()}
 										</span>
+
+										<button
+											className="text-left"
+											onClick={() => logout(router, setLogoutLoading)}
+											disabled={logoutLoading}
+										>
+											{logoutLoading && (
+												<div
+													className={`absolute top-10 left-2 inline-block group cursor-pointer mt-1`}
+												>
+													<RogLoading />
+												</div>
+											)}
+											<span
+												className={`inline-block group cursor-pointer mt-1 text-base md:text-sm ${
+													logoutLoading ? "opacity-0" : ""
+												}`}
+											>
+												LOG OUT
+												<span className="absolute left-0 -bottom-0.5 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+											</span>
+										</button>
 									</motion.div>
 									<div>
 										{copied && (
 											<AnimatePresence>
 												<motion.div
 													layout
-													className="absolute top-2 -left-6 w-max flex gap-4"
+													className="absolute top-2 -left-[10px] md:-left-[14px] w-max flex gap-4"
 													initial={{ opacity: 0 }}
 													animate={{ opacity: 1 }}
 													exit={{ opacity: 0 }}
@@ -344,13 +346,13 @@ export default function DashboardPageContents() {
 												transition={{ duration: 0.3 }}
 												className={
 													timeLeft.days <= 1
-														? "absolute top-40 flex items-center font-mono cursor-pointer text-red-700"
-														: "absolute top-40 flex items-center font-mono font-semibold cursor-pointer text-green-600"
+														? "absolute top-35 flex items-center font-mono cursor-pointer text-red-700"
+														: "absolute top-35 flex items-center font-mono font-semibold cursor-pointer text-green-600"
 												}
 											>
 												<div>
 													<span
-														className={`animate-pulse flex items-center justify-center text-center hover:text-white transition-all duration-200 font-semibold text-xs xl:text-xl ${
+														className={`animate-pulse flex items-center justify-center text-center hover:text-white transition-all duration-200 font-semibold text-sm xl:text-xl ${
 															showDetails ? "hidden" : ""
 														}`}
 														onClick={() => setShowDetails(!showDetails)}
@@ -381,7 +383,7 @@ export default function DashboardPageContents() {
 													</span>
 												</div>
 											</motion.div>
-											<div className="min-h-[1.8rem] absolute top-40 animate-pulse">
+											<div className="min-h-[1.8rem] absolute top-35 animate-pulse">
 												<AnimatePresence mode="wait">
 													{showDetails && (
 														<motion.div
@@ -393,8 +395,8 @@ export default function DashboardPageContents() {
 															transition={{ duration: 0.3 }}
 															className={
 																timeLeft.days <= 1
-																	? "flex text-center justify-center items-center text-xl font-mono cursor-pointer text-red-700"
-																	: "flex text-center justify-center items-center text-xl font-mono font-semibold cursor-pointer text-green-600"
+																	? "flex text-center justify-center items-center font-mono font-semibold cursor-pointer text-red-700 text-base xl:text-xl"
+																	: "flex text-center justify-center items-center font-mono font-semibold cursor-pointer text-green-600 text-base xl:text-xl"
 															}
 															onClick={() => setShowDetails(false)}
 														>
@@ -417,7 +419,7 @@ export default function DashboardPageContents() {
 			<main className="flex min-h-screen items-center justify-center mx-auto max-w-max">
 				<div className="flex justify-center items-center">
 					<div className="flex flex-col items-center justify-center p-6 rounded-lg shadow-lg gap-10">
-						<div className="absolute top-10 left-10 flex items-center justify-center">
+						<div className="absolute top-10 left-1/2 md:left-30 transform -translate-x-1/2 flex items-center justify-center">
 							<h1>
 								Welcome,{" "}
 								<span className="font-bold text-yellow-600">
@@ -426,6 +428,7 @@ export default function DashboardPageContents() {
 								!
 							</h1>
 						</div>
+
 						<AnimatePresence>
 							{drawer !== "actions" && (
 								<motion.div
@@ -439,7 +442,7 @@ export default function DashboardPageContents() {
 										onClick={() =>
 											setDrawer(drawer === "actions" ? null : "actions")
 										}
-										className={`cursor-pointer hover:scale-110 transition duration-200`}
+										className={`absolute -top-10 -left-6 cursor-pointer hover:scale-110 transition duration-200`}
 									>
 										<RogLoading />
 									</button>
