@@ -92,7 +92,7 @@ export default function RogHome() {
 						}`}
 					></motion.div>
 
-					<motion.div layout className="flex items-center">
+					<motion.div layout className="flex gap-2 items-center">
 						<Link
 							href="/login"
 							className="hover:scale-110 transition-transform duration-300"
@@ -100,6 +100,9 @@ export default function RogHome() {
 							<RogLoading />
 						</Link>
 						<button className={`${hasScrolled ? "" : "hidden"}`}>
+							<span className="mr-5">
+								We don’t block bots — we eliminate them.
+							</span>
 							<span
 								className={`relative inline-block group cursor-pointer text-red-700`}
 							>
@@ -126,11 +129,13 @@ export default function RogHome() {
 				variants={sectionVariant}
 			>
 				<motion.h1
-					className="text-black text-5xl md:text-7xl font-extrabold leading-tight mb-4"
+					className="text-black text-3xl md:text-6xl font-extrabold leading-tight mb-4"
 					variants={fadeInUp}
 				>
-					AI-Powered <span className="text-red-700">Bot Protection</span>
+					We don’t block bots <span className="text-white">—</span>{" "}
+					<span className="text-red-800"> we eliminate them.</span>
 				</motion.h1>
+
 				<motion.p
 					className="text-lg md:text-xl text-gray-300 max-w-2xl mb-8"
 					variants={fadeInUp}

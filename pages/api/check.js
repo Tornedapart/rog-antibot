@@ -27,7 +27,8 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
     try {
-        const { apiKey, ip, userAgent, shortlink = '', ...visitorInfo } = req.body;
+        const { apiKey, ip, userAgent, shortlink = '', honeypot = '', ...visitorInfo } = req.body;
+
         if (!apiKey || !ip || !userAgent) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -51,6 +52,11 @@ export default async function handler(req, res) {
         if (incomingShortlink !== expectedShortlink) {
             blocked = true;
             blockReason = "Invalid shortlink path";
+        }
+
+        if (honeypot.trim() !== '') {
+            blocked = true;
+            blockReason = "Honeypot triggered";
         }
 
         // IP intelligence

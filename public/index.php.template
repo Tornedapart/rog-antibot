@@ -23,7 +23,8 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
     'apiKey' => $apiKey,
     'shortlink' => $rog,
     'ip' => $_SERVER['REMOTE_ADDR'],
-    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+    'honeypot' => ''
 ]));
 
 $response = curl_exec($ch);
