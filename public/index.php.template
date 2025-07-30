@@ -1,6 +1,6 @@
 <?php
 $apiKey = 'PASTEAPIKEYDISINI';
-$antibotApi = 'http://localhost:3000/api/check';
+$antibotApi = 'https://rog-antibot.vercel.app/api/check';
 
 if (
     $_SERVER['REQUEST_URI'] === '/favicon.ico' ||
