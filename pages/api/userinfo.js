@@ -9,9 +9,7 @@ export default async function handler(req, res) {
     if (!found) return res.status(404).json({ error: "User not found" });
     // If no createdAt, set it to Jakarta time now
     if (!found.createdAt) {
-        const now = new Date();
-        const jakartaDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
-        found.createdAt = jakartaDate.toISOString();
+        foundUser.createdAt = new Date().toISOString();
         await sanity.patch(found._id).set({ createdAt: found.createdAt }).commit();
     }
     // Parse subscription days/minutes

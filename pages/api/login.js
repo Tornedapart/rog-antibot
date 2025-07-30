@@ -3,8 +3,6 @@ import { getIronSession } from 'iron-session';
 import sanity from '../../lib/sanity';
 import bcrypt from 'bcryptjs';
 
-
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -25,9 +23,7 @@ export default async function handler(req, res) {
         }
         // Ensure createdAt is set if missing
         if (!foundUser.createdAt) {
-            const now = new Date();
-            const jakartaDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
-            foundUser.createdAt = jakartaDate.toISOString();
+            foundUser.createdAt = new Date().toISOString();
             await sanity.patch(foundUser._id).set({ createdAt: foundUser.createdAt }).commit();
         }
         // Set session
