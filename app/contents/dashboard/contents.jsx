@@ -346,8 +346,8 @@ export default function DashboardPageContents() {
 												transition={{ duration: 0.3 }}
 												className={
 													timeLeft.days <= 1
-														? "absolute top-35 flex items-center font-mono cursor-pointer text-red-700"
-														: "absolute top-35 flex items-center font-mono font-semibold cursor-pointer text-green-600"
+														? "absolute top-50 flex items-center font-mono cursor-pointer text-red-700"
+														: "absolute top-50 flex items-center font-mono font-semibold cursor-pointer text-green-600"
 												}
 											>
 												<div>
@@ -383,7 +383,7 @@ export default function DashboardPageContents() {
 													</span>
 												</div>
 											</motion.div>
-											<div className="min-h-[1.8rem] absolute top-35 animate-pulse">
+											<div className="min-h-[1.8rem] absolute top-50 animate-pulse">
 												<AnimatePresence mode="wait">
 													{showDetails && (
 														<motion.div

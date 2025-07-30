@@ -9,5 +9,6 @@ export default {
         { name: 'shortlinkPath', type: 'string', title: 'Shortlink Path' },
         { name: 'mainSite', type: 'string', title: 'Main Site' },
         { name: 'blockIps', type: 'string', title: 'Blocked IPs' },
+        { name: 'useLocalDetection', type: 'boolean', title: 'Use ROG Detection', initialValue: false },
     ],
 };

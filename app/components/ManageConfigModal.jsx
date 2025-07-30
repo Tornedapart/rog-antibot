@@ -105,6 +105,19 @@ export default function ManageConfigModal({
 									placeholder="e.g. 1.2.3.4, 5.6.7.8"
 								/>
 							</label>
+							<label className="flex items-center gap-2">
+								<input
+									type="checkbox"
+									checked={config.enableLocalDetection ?? false}
+									onChange={(e) =>
+										onChange({
+											...config,
+											enableLocalDetection: e.target.checked,
+										})
+									}
+								/>
+								<span className="font-semibold">Use ROG Special Detection</span>
+							</label>
 							{config.bridgeDomain && config.shortlinkPath && (
 								<AnimatePresence>
 									<motion.div
