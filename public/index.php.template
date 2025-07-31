@@ -1,6 +1,7 @@
 <?php
 $apiKey = 'PASTEAPIKEYDISINI';
-$antibotApi = 'http://localhost:3000/api/check';
+$antibotApi = 'https://rog-antibot.vercel.app/api/check';
+
 if (
     $_SERVER['REQUEST_URI'] === '/favicon.ico' ||
     !isset($_GET['rog']) || empty($_GET['rog'])
@@ -9,27 +10,18 @@ if (
     include '404.html';
     exit;
 }
-if (!isset($_COOKIE['rogid'])) {
-    setcookie('rogid', '1', [
-        'expires' => time() + 3600,
-        'path' => '/',
-        'secure' => isset($_SERVER['HTTPS']),
-        'httponly' => false,
-        'samesite' => 'Lax'
-    ]);
-}
+
 $rog = $_GET['rog'];
 $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
 $host = $_SERVER['HTTP_HOST'];
 $referer = $scheme . "://" . $host;
-$cookieHeader = 'Cookie: rogid=' . ($_COOKIE['rogid'] ?? '');
+
 $ch = curl_init($antibotApi);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
-    'Referer: ' . $referer,
-    $cookieHeader
+    'Referer: ' . $referer
 ]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
     'apiKey' => $apiKey,
@@ -41,6 +33,7 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
 $response = curl_exec($ch);
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
+
 if ($httpcode === 200 && $response) {
     $data = json_decode($response, true);
     if (!empty($data['allow']) && !empty($data['redirect'])) {
@@ -48,6 +41,7 @@ if ($httpcode === 200 && $response) {
         exit;
     }
 }
+
 http_response_code(404);
 include '404.html';
 exit;
