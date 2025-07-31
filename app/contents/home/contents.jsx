@@ -107,7 +107,7 @@ export default function RogHome() {
 								className={`relative inline-block group cursor-pointer text-red-700 text-sm md:text-base`}
 							>
 								<Link
-									href="https://t.me/tornapartx"
+									href="https://t.me/rogantibot"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
