@@ -6,6 +6,7 @@ export default function VisitorSummaryModal() {
 	const [open, setOpen] = useState(false);
 	const [visitors, setVisitors] = useState([]);
 	const [copied, setCopied] = useState(false);
+	const [blockedIps, setBlockedIps] = useState([]);
 
 	useEffect(() => {
 		const handler = () => {
@@ -13,10 +14,17 @@ export default function VisitorSummaryModal() {
 			const cloned = JSON.parse(JSON.stringify(rawData));
 			setVisitors(cloned);
 			setOpen(true);
+			fetchBlockedIps();
 		};
 		window.addEventListener("showVisitorSummary", handler);
 		return () => window.removeEventListener("showVisitorSummary", handler);
 	}, []);
+
+	const fetchBlockedIps = async () => {
+		const res = await fetch("/api/blockedIps");
+		const data = await res.json();
+		setBlockedIps(data);
+	};
 
 	const handleClose = () => setOpen(false);
 
@@ -29,6 +37,14 @@ export default function VisitorSummaryModal() {
 		} catch {
 			return input;
 		}
+	};
+
+	const clearBlockedIps = async () => {
+		if (!window.confirm("Delete all blocked IPs?")) return;
+		await fetch("/api/blockedIps", {
+			method: "DELETE",
+		});
+		setBlockedIps([]);
 	};
 
 	return (
@@ -197,6 +213,36 @@ export default function VisitorSummaryModal() {
 									}}
 								>
 									CLEAR LOGS
+								</button>
+							</div>
+						)}
+
+						{blockedIps.length > 0 && (
+							<div className="mt-10 border-t pt-6 flex flex-col items-center">
+								<div className="flex flex-col items-center mb-4 w-full max-w-xl mx-auto text-center">
+									<h3 className="font-bold text-xl mb-2">
+										IP List that was blocked by ROG Antibot
+									</h3>
+									<span>
+										If there is an ip detected as a bot/crawl/spider/scrapper
+										visiting your shortlink, it will be blocked permanently from
+										accessing your shortlink and it will be displayed below
+										here.
+									</span>
+								</div>
+								<ul className="list-disc list-inside text-xs">
+									{blockedIps.map((entry, i) => (
+										<li key={i}>
+											<span className="font-mono text-red-500">{entry.ip}</span>{" "}
+											- {entry.reason} ({formatTime(entry.createdAt)})
+										</li>
+									))}
+								</ul>
+								<button
+									onClick={clearBlockedIps}
+									className="mt-4 px-4 py-1 text-xs font-bold bg-red-800 hover:bg-red-900 rounded text-white"
+								>
+									Clear All Blocked IPs
 								</button>
 							</div>
 						)}
