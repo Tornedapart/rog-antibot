@@ -1,18 +1,22 @@
 import sanity from '../../lib/sanity';
 import fetch from 'node-fetch';
 import { rogAntibot } from '../../lib/rogAntibot';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
-// Helper: get user by apiKey from Sanity
+const rateLimiter = new RateLimiterMemory({
+    points: 5,
+    duration: 60,
+});
+
+// Helpers
 async function getUserByApiKey(apiKey) {
     return await sanity.fetch(`*[_type == "user" && apiKey == $apiKey][0]`, { apiKey });
 }
 
-// Helper: get config by apiKey from Sanity
 async function getConfigByApiKey(apiKey) {
     return await sanity.fetch(`*[_type == "config" && apiKey == $apiKey][0]`, { apiKey }) || {};
 }
 
-// Helper: log visitor to Sanity
 async function logVisitor(user, log) {
     await sanity.create({
         _type: 'visitorLog',
@@ -22,9 +26,38 @@ async function logVisitor(user, log) {
     });
 }
 
+async function isIpPermanentlyBlocked(ip) {
+    return await sanity.fetch(`*[_type == "blockedIp" && ip == $ip][0]`, { ip });
+}
+
+async function permanentlyBlockIp(ip, reason = "Bot detected") {
+    try {
+        await sanity.create({
+            _type: 'blockedIp',
+            ip,
+            reason,
+            createdAt: new Date().toISOString(),
+        });
+    } catch (err) {
+        console.error('Failed to permanently block IP:', err);
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const requestIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.connection.remoteAddress;
+
+    // Rate limiting
+    try {
+        await rateLimiter.consume(requestIp);
+    } catch {
+        return res.status(404).json({
+            blocked: true,
+            reason: 'Too many requests.',
+        });
     }
 
     try {
@@ -35,18 +68,29 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Check permanent IP block
+        const ipBlocked = await isIpPermanentlyBlocked(ip);
+        if (ipBlocked) {
+            return res.status(404).json({
+                allow: false,
+                reason: `Permanently blocked (${ipBlocked.reason || 'Bot detected'})`,
+            });
+        }
+
         const user = await getUserByApiKey(apiKey);
         if (!user) {
             return res.status(401).json({ error: 'Invalid API key' });
         }
 
         const config = await getConfigByApiKey(apiKey);
-        const allowCountries = config.allowCountries || "";
-        const mainSite = config.mainSite || "";
-        const blockIps = config.blockIps || "";
-        const shortlinkPath = config.shortlinkPath || "";
-        const enableLocalDetection = config.enableLocalDetection ?? true;
-        const bridgeDomain = config.bridgeDomain || "";
+        const {
+            allowCountries = "",
+            mainSite = "",
+            blockIps = "",
+            shortlinkPath = "",
+            enableLocalDetection = true,
+            bridgeDomain = ""
+        } = config;
 
         const referer = headers.referer || headers.origin || "";
         const normalizedReferer = referer.replace("://[::1]", "://localhost").replace("://127.0.0.1", "://localhost");
@@ -55,26 +99,22 @@ export default async function handler(req, res) {
         let blockReason = "";
         let isLocalBlock = false;
 
-        // 🔒 Enforce bridge domain check (non-terminating)
-
-        // Block if referer is still missing
+        // Bridge domain validation
         if (!normalizedReferer) {
             blocked = true;
             blockReason = "Missing referer or origin";
         }
 
-        // Bridge domain check
         if (bridgeDomain && !blocked) {
             const sanitizedBridge = bridgeDomain.replace(/\/$/, "").toLowerCase();
             const sanitizedReferer = normalizedReferer.toLowerCase();
-
             if (!sanitizedReferer.startsWith(sanitizedBridge)) {
                 blocked = true;
                 blockReason = `Unauthorized Access : ${sanitizedReferer}`;
             }
         }
 
-        // 🧠 Local bot detection
+        // Local detection
         const localResult = enableLocalDetection
             ? rogAntibot({ ip, userAgent, headers })
             : { blocked: false, reason: "" };
@@ -85,21 +125,19 @@ export default async function handler(req, res) {
             isLocalBlock = true;
         }
 
-        // 🔗 Shortlink logic
-        const incomingShortlink = shortlink.trim().toLowerCase();
-        const expectedShortlink = shortlinkPath.trim().toLowerCase();
-        if (!blocked && incomingShortlink !== expectedShortlink) {
+        // Shortlink check
+        if (!blocked && shortlink.trim().toLowerCase() !== shortlinkPath.trim().toLowerCase()) {
             blocked = true;
             blockReason = "Invalid shortlink path";
         }
 
-        // 🕳️ Honeypot
+        // Honeypot
         if (!blocked && honeypot.trim() !== '') {
             blocked = true;
             blockReason = "Honeypot triggered";
         }
 
-        // 🌐 IP Intelligence
+        // IP Detective
         let ipDetective = null;
         try {
             const resp = await fetch(`https://api.ipdetective.io/ip/${ip}?info=true`, {
@@ -112,32 +150,35 @@ export default async function handler(req, res) {
             console.error("Failed to fetch IP intelligence:", e);
         }
 
-        // 🤖 Bot Check
+        // Bot detection
         const isBot = ipDetective?.bot || /bot|crawl|spider|curl|wget/i.test(userAgent) || isLocalBlock;
         if (!blocked && isBot) {
             blocked = true;
             blockReason = "Bot detected";
+
+            // Store in permanent blocklist
+            await permanentlyBlockIp(ip, blockReason);
         }
 
-        // 🌍 Country allowlist
-        if (!blocked && allowCountries.trim() && ipDetective?.country_code) {
-            const allowedArr = allowCountries.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+        // Country check
+        if (!blocked && allowCountries && ipDetective?.country_code) {
+            const allowedArr = allowCountries.split(',').map(c => c.trim().toUpperCase());
             if (!allowedArr.includes(ipDetective.country_code.toUpperCase())) {
                 blocked = true;
                 blockReason = `Country not allowed (${ipDetective.country_code})`;
             }
         }
 
-        // 🚫 IP block
-        if (!blocked && blockIps.trim()) {
-            const blockArr = blockIps.split(',').map(ip => ip.trim()).filter(Boolean);
+        // Static IP blocklist
+        if (!blocked && blockIps) {
+            const blockArr = blockIps.split(',').map(b => b.trim());
             if (blockArr.includes(ip)) {
                 blocked = true;
-                blockReason = "IP blocked";
+                blockReason = "IP blocked by config";
             }
         }
 
-        // 🕒 Jakarta time
+        // Log
         const now = new Date();
         const jakartaTime = now.toLocaleTimeString('en-US', {
             timeZone: 'Asia/Jakarta',
@@ -146,9 +187,8 @@ export default async function handler(req, res) {
             hour12: true
         });
 
-        // 📝 Logging
         const result = blocked ? "Blocked" : "Allowed";
-        const reason = blocked ? (blockReason || "Blocked by config") : "Passed antibot checks";
+        const reason = blocked ? blockReason : "Passed antibot checks";
 
         const logEntry = {
             time: jakartaTime,
@@ -167,7 +207,6 @@ export default async function handler(req, res) {
             console.error("Failed to log visitor:", e);
         }
 
-        // ✅ Final response
         if (blocked) {
             return res.status(200).json({ allow: false, reason });
         }

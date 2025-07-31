@@ -138,7 +138,7 @@ export default function LoginPageContents() {
 								/>
 							</div>
 							<div>
-								<label className="block mb-1 font-medium">Password</label>
+								<label className="block mb-1 font-medium">Key</label>
 								<input
 									type="password"
 									value={password}

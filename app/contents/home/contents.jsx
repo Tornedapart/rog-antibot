@@ -129,10 +129,10 @@ export default function RogHome() {
 				variants={sectionVariant}
 			>
 				<motion.h1
-					className="text-black text-3xl md:text-6xl font-extrabold leading-tight mb-4"
+					className="text-white text-3xl md:text-6xl font-extrabold leading-tight mb-4"
 					variants={fadeInUp}
 				>
-					We don’t block bots <span className="text-white">—</span>{" "}
+					We don’t block bots <span className="text-black">—</span>{" "}
 					<span className="text-red-800"> we eliminate them.</span>
 				</motion.h1>
 
@@ -253,35 +253,34 @@ export default function RogHome() {
 					</motion.h2>
 					<div className="flex flex-col md:flex-row w-full mx-auto justify-center gap-10 items-center">
 						{[
-							{
-								price: "$22",
-							},
-							{
-								price: "$61",
-							},
-						].map((plan, i) => (
-							<motion.div
+							{ priceUsd: "$22", priceIdr: "≈ Rp350.000", plan: "week" },
+							{ priceUsd: "$61", priceIdr: "≈ Rp970.000", plan: "month" },
+						].map((planData, i) => (
+							<Link
 								key={i}
-								className="p-6 rounded-xl hover:ring-2 hover:ring-red-700 bg-black text-white transition w-full max-w-xs text-center flex flex-col items-center justify-center"
-								whileHover={{ scale: 1.05 }}
-								variants={fadeInUp}
+								href={`/api/rogBot?plan=${planData.plan}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="w-full max-w-xs"
 							>
-								{plan.price == "$22" ? (
-									<div className="flex gap-2 items-center">
+								<motion.div
+									className="border-l-4 border-l-red-700 p-6 rounded-xl hover:border-none hover:ring-2 hover:ring-red-700 bg-black text-white transition w-full max-w-xl text-center flex flex-col items-center justify-center"
+									whileHover={{ scale: 1.05 }}
+									variants={fadeInUp}
+								>
+									<div className="flex flex-col items-center">
 										<p className="text-3xl font-bold text-green-600">
-											{plan.price}
+											{planData.priceUsd}
 										</p>
-										<span className="text-3xl">/ Week</span>
+										<span className="text-lg text-gray-400">
+											{planData.priceIdr}
+										</span>
+										<span className="text-xl">
+											{planData.plan === "week" ? "/ Week" : "/ Month"}
+										</span>
 									</div>
-								) : (
-									<div className="flex gap-2 items-center">
-										<p className="text-3xl font-bold text-green-600">
-											{plan.price}
-										</p>
-										<span className="text-3xl">/ Month</span>
-									</div>
-								)}
-							</motion.div>
+								</motion.div>
+							</Link>
 						))}
 					</div>
 				</div>
